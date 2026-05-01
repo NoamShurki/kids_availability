@@ -32,7 +32,9 @@ export function NotifyButton({ babyId }: { babyId: string }) {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ babyId, subscription: sub.toJSON() }),
-        });
+        }).then((r) => r.json()).then((body) => {
+          if (!body.ok) console.error("Re-save failed:", body);
+        }).catch((err) => console.error("Re-save fetch error:", err));
       })
     );
   }, [babyId]);
