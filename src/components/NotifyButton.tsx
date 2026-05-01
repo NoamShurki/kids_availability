@@ -38,27 +38,37 @@ export function NotifyButton({ babyId }: { babyId: string }) {
   }, [babyId]);
 
   async function subscribe() {
-    const reg = await navigator.serviceWorker.register("/sw.js");
-    await navigator.serviceWorker.ready;
+    try {
+      const reg = await navigator.serviceWorker.register("/sw.js");
+      await navigator.serviceWorker.ready;
 
-    const permission = await Notification.requestPermission();
-    if (permission !== "granted") {
-      setState("denied");
-      return;
+      const permission = await Notification.requestPermission();
+      if (permission !== "granted") {
+        setState("denied");
+        return;
+      }
+
+      const sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+      });
+
+      const res = await fetch("/api/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ babyId, subscription: sub.toJSON() }),
+      });
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        alert("Could not save subscription: " + (body.error ?? res.status));
+        return;
+      }
+
+      setState("subscribed");
+    } catch (err) {
+      alert("Subscribe failed: " + String(err));
     }
-
-    const sub = await reg.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
-    });
-
-    await fetch("/api/subscribe", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ babyId, subscription: sub.toJSON() }),
-    });
-
-    setState("subscribed");
   }
 
   async function unsubscribe() {
