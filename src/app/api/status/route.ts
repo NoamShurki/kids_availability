@@ -103,17 +103,26 @@ export async function POST(request: NextRequest) {
         url: `${process.env.NEXT_PUBLIC_APP_URL ?? ""}`,
       });
 
-      await Promise.allSettled(
+      const results = await Promise.allSettled(
         subs.map((sub: { endpoint: string; p256dh: string; auth: string }) =>
           webpush.sendNotification(
             { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
             payload
-          ).catch(() => {
-            // Remove expired/invalid subscriptions
-            admin.from("push_subscriptions").delete().eq("endpoint", sub.endpoint);
-          })
+          )
         )
       );
+
+      results.forEach((result, i) => {
+        if (result.status === "rejected") {
+          const err = result.reason as { statusCode?: number; message?: string };
+          console.error(`Push failed for sub ${i}:`, err.statusCode, err.message);
+          if (err.statusCode === 410 || err.statusCode === 404) {
+            admin.from("push_subscriptions").delete().eq("endpoint", subs[i].endpoint);
+          }
+        } else {
+          console.log(`Push sent ok for sub ${i}`);
+        }
+      });
     }
   }
 
