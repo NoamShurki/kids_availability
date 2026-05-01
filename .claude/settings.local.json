@@ -4,7 +4,11 @@
       "Bash(npx create-next-app@latest . --typescript --tailwind --app --src-dir --import-alias \"@/*\" --no-git --yes)",
       "Bash(npm install *)",
       "Bash(Get-Content \"C:\\\\Users\\\\noams\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-noams-projects-kids-availability\\\\08b9496e-6e2e-4bd1-90d0-a1114610b0fb\\\\tasks\\\\b3hu2xpb3.output\" -Wait -Tail 30)",
-      "Bash(exit 0)"
+      "Bash(exit 0)",
+      "Bash(npx tsc *)",
+      "Bash(git init *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)"
     ]
   }
 }
