@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { RealtimeStatus } from "@/components/RealtimeStatus";
 import { SuggestionBanner } from "@/components/SuggestionBanner";
 import { StatusPicker } from "@/components/StatusPicker";
+import { NotifyButton } from "@/components/NotifyButton";
 import Link from "next/link";
 import type { BabyWithStatus } from "@/lib/types";
 import { resolveCurrentStatus } from "@/lib/types";
@@ -111,6 +112,10 @@ export default async function BabyStatusPage({ params }: Props) {
             babySlug={babySlug}
           />
         </div>
+      )}
+
+      {!isManager && (
+        <NotifyButton babyId={b.id} />
       )}
 
       {!user && (

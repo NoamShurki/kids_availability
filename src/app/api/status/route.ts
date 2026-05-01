@@ -1,6 +1,13 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
+import webpush from "web-push";
+
+webpush.setVapidDetails(
+  process.env.VAPID_MAILTO!,
+  process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
+  process.env.VAPID_PRIVATE_KEY!
+);
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient();
@@ -44,7 +51,7 @@ export async function POST(request: NextRequest) {
   // Verify the status definition belongs to the same family
   const { data: statusDef } = await supabase
     .from("status_definitions")
-    .select("id")
+    .select("id, label, emoji")
     .eq("id", statusDefinitionId)
     .eq("family_id", baby.family_id)
     .single();
@@ -78,6 +85,37 @@ export async function POST(request: NextRequest) {
     set_at: now,
     set_by: user.id,
   });
+
+  // Send push notifications if status is "available"
+  if (statusDef && statusDef.label.toLowerCase().includes("available")) {
+    const admin = await createAdminClient();
+    const { data: subs } = await admin
+      .from("push_subscriptions")
+      .select("endpoint, p256dh, auth")
+      .eq("baby_id", baby.id);
+
+    if (subs && subs.length > 0) {
+      const { data: babyRow } = await supabase.from("babies").select("name").eq("id", baby.id).single();
+      const babyName = babyRow?.name ?? "Baby";
+      const payload = JSON.stringify({
+        title: `${statusDef.emoji ?? ""} ${babyName} is available!`.trim(),
+        body: note || `Status: ${statusDef.label}`,
+        url: `${process.env.NEXT_PUBLIC_APP_URL ?? ""}`,
+      });
+
+      await Promise.allSettled(
+        subs.map((sub: { endpoint: string; p256dh: string; auth: string }) =>
+          webpush.sendNotification(
+            { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
+            payload
+          ).catch(() => {
+            // Remove expired/invalid subscriptions
+            admin.from("push_subscriptions").delete().eq("endpoint", sub.endpoint);
+          })
+        )
+      );
+    }
+  }
 
   return NextResponse.json({ ok: true });
 }
