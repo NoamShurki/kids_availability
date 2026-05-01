@@ -12,6 +12,7 @@ interface Props {
 
 export function StatusPicker({ statuses, currentStatusId, babySlug, onSaved }: Props) {
   const [selectedId, setSelectedId] = useState(currentStatusId);
+  const [activeStatusId, setActiveStatusId] = useState(currentStatusId);
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -30,6 +31,7 @@ export function StatusPicker({ statuses, currentStatusId, babySlug, onSaved }: P
         const body = await res.json().catch(() => ({}));
         throw new Error(body.error ?? "Failed to save");
       }
+      setActiveStatusId(selectedId);
       setSaved(true);
       setNote("");
       setTimeout(() => setSaved(false), 2000);
@@ -91,7 +93,7 @@ export function StatusPicker({ statuses, currentStatusId, babySlug, onSaved }: P
 
       <button
         onClick={handleSave}
-        disabled={saving || selectedId === currentStatusId && note === ""}
+        disabled={saving || selectedId === activeStatusId && note === ""}
         className="w-full rounded-2xl bg-blue-600 py-3 text-lg font-semibold text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
       >
         {saving ? "Saving…" : saved ? "Saved!" : "Update Status"}
