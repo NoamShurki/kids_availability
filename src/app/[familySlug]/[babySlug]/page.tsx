@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { RealtimeStatus } from "@/components/RealtimeStatus";
 import { SuggestionBanner } from "@/components/SuggestionBanner";
+import { StatusPicker } from "@/components/StatusPicker";
 import Link from "next/link";
 import type { BabyWithStatus } from "@/lib/types";
 import { resolveCurrentStatus } from "@/lib/types";
@@ -15,7 +16,7 @@ export async function generateMetadata({ params }: Props) {
   return { title: `${babySlug} — Baby Available?` };
 }
 
-export const revalidate = 0; // always fresh — realtime takes over client-side
+export const revalidate = 0;
 
 export default async function BabyStatusPage({ params }: Props) {
   const { familySlug, babySlug } = await params;
@@ -47,6 +48,31 @@ export default async function BabyStatusPage({ params }: Props) {
   const b = baby as BabyWithStatus;
   const current = resolveCurrentStatus(b.baby_status_current);
 
+  // Check if the logged-in user is a manager of this family
+  const { data: { user } } = await supabase.auth.getUser();
+  let isManager = false;
+  let statuses = null;
+
+  if (user) {
+    const { data: membership } = await supabase
+      .from("family_managers")
+      .select("id")
+      .eq("family_id", family.id)
+      .eq("user_id", user.id)
+      .single();
+
+    isManager = !!membership;
+
+    if (isManager) {
+      const { data: statusData } = await supabase
+        .from("status_definitions")
+        .select("*")
+        .eq("family_id", family.id)
+        .order("sort_order");
+      statuses = statusData;
+    }
+  }
+
   return (
     <div className="space-y-6">
       <Link href={`/${familySlug}`} className="text-sm text-blue-600 hover:underline">
@@ -75,6 +101,26 @@ export default async function BabyStatusPage({ params }: Props) {
       </div>
 
       <SuggestionBanner babyId={b.id} />
+
+      {isManager && statuses && (
+        <div className="rounded-3xl bg-white shadow-sm border border-gray-100 p-6">
+          <h2 className="text-lg font-semibold mb-4 text-gray-800">Update Status</h2>
+          <StatusPicker
+            statuses={statuses}
+            currentStatusId={current?.status_def_id ?? ""}
+            babySlug={babySlug}
+          />
+        </div>
+      )}
+
+      {!user && (
+        <p className="text-center text-sm text-gray-400">
+          Parent?{" "}
+          <Link href={`/login?redirectTo=/${familySlug}/${babySlug}`} className="text-blue-500 hover:underline">
+            Log in to update status
+          </Link>
+        </p>
+      )}
     </div>
   );
 }

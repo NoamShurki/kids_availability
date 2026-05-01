@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 export default function LoginPage() {
@@ -8,6 +9,8 @@ export default function LoginPage() {
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get("redirectTo") ?? "/manage";
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -18,7 +21,7 @@ export default function LoginPage() {
     const { error: authError } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        emailRedirectTo: `${window.location.origin}/auth/callback?redirectTo=${encodeURIComponent(redirectTo)}`,
       },
     });
 
@@ -47,7 +50,7 @@ export default function LoginPage() {
     <div className="py-12 space-y-6">
       <div className="text-center space-y-2">
         <p className="text-4xl">🔑</p>
-        <h1 className="text-2xl font-bold">Manager Login</h1>
+        <h1 className="text-2xl font-bold">Parent Login</h1>
         <p className="text-gray-500 text-sm">For parents only — relatives don&apos;t need to log in.</p>
       </div>
 
