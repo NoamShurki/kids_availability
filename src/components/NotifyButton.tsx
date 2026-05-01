@@ -23,13 +23,19 @@ export function NotifyButton({ babyId }: { babyId: string }) {
       setState("denied");
       return;
     }
-    // Check if already subscribed
     navigator.serviceWorker.ready.then((reg) =>
       reg.pushManager.getSubscription().then((sub) => {
-        if (sub) setState("subscribed");
+        if (!sub) return;
+        setState("subscribed");
+        // Re-save to DB in case it was deleted (e.g. after a failed push attempt)
+        fetch("/api/subscribe", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ babyId, subscription: sub.toJSON() }),
+        });
       })
     );
-  }, []);
+  }, [babyId]);
 
   async function subscribe() {
     const reg = await navigator.serviceWorker.register("/sw.js");
