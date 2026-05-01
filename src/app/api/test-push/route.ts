@@ -9,7 +9,7 @@ webpush.setVapidDetails(
 );
 
 export async function GET() {
-  const admin = await createAdminClient();
+  const admin = createAdminClient();
   const { data: subs, error } = await admin.from("push_subscriptions").select("endpoint, p256dh, auth");
 
   console.log("Subscriptions found:", subs?.length ?? 0, "Error:", error?.message);

@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
 
   // Send push notifications if status is "available"
   if (statusDef && statusDef.label.toLowerCase().includes("available")) {
-    const admin = await createAdminClient();
+    const admin = createAdminClient();
     const { data: subs } = await admin
       .from("push_subscriptions")
       .select("endpoint, p256dh, auth")

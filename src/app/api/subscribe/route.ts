@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Missing fields" }, { status: 400 });
   }
 
-  const supabase = await createAdminClient();
+  const supabase = createAdminClient();
 
   const { error } = await supabase.from("push_subscriptions").upsert({
     baby_id: babyId,
@@ -41,7 +41,7 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const supabase = await createAdminClient();
+  const supabase = createAdminClient();
   await supabase.from("push_subscriptions").delete().eq("endpoint", body.endpoint);
 
   return NextResponse.json({ ok: true });
