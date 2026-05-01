@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { StatusPicker } from "@/components/StatusPicker";
 import type { BabyWithStatus } from "@/lib/types";
+import { resolveCurrentStatus } from "@/lib/types";
 
 interface Props {
   params: Promise<{ babySlug: string }>;
@@ -36,7 +37,7 @@ export default async function ManageBabyPage({ params }: Props) {
   if (!baby) notFound();
 
   const b = baby as BabyWithStatus;
-  const current = b.baby_status_current?.[0];
+  const current = resolveCurrentStatus(b.baby_status_current);
 
   // Load status options for this family
   const { data: statuses } = await supabase

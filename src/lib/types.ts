@@ -50,12 +50,19 @@ export type FamilyManager = {
   created_at: string;
 };
 
-// Joined shape returned by the public status page query
+export type CurrentStatusJoined = BabyStatusCurrent & { status_definitions: StatusDefinition };
+
+// Supabase returns one-to-one relations as object (not array) when the FK has UNIQUE constraint
 export type BabyWithStatus = Baby & {
-  baby_status_current: Array<
-    BabyStatusCurrent & { status_definitions: StatusDefinition }
-  >;
+  baby_status_current: CurrentStatusJoined | CurrentStatusJoined[] | null;
 };
+
+export function resolveCurrentStatus(
+  raw: CurrentStatusJoined | CurrentStatusJoined[] | null | undefined
+): CurrentStatusJoined | null {
+  if (!raw) return null;
+  return Array.isArray(raw) ? (raw[0] ?? null) : raw;
+}
 
 export type FamilyWithBabies = Family & {
   babies: BabyWithStatus[];

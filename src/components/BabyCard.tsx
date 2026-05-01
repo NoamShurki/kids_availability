@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { BabyWithStatus } from "@/lib/types";
+import { resolveCurrentStatus } from "@/lib/types";
 import { StatusBadge } from "./StatusBadge";
 import { LastUpdated } from "./LastUpdated";
 
@@ -9,7 +10,7 @@ interface Props {
 }
 
 export function BabyCard({ baby, familySlug }: Props) {
-  const current = baby.baby_status_current?.[0];
+  const current = resolveCurrentStatus(baby.baby_status_current);
   const status = current?.status_definitions;
 
   return (
