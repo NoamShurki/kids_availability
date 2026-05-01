@@ -38,6 +38,9 @@ yarn-error.log*
 # supabase local state
 .supabase/
 
+# Claude Code local settings
+.claude/
+
 # vercel
 .vercel
 
